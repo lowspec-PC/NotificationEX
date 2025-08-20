@@ -65,14 +65,14 @@ async def on_ready():
 )
 @app_commands.choices(
     action=[
-        app_commands.Choice(name="追加", value="add"),
-        app_commands.Choice(name="削除", value="remove"),
-        app_commands.Choice(name="一覧", value="list")
+        app_commands.Choice(name="追加(add)", value="add"),
+        app_commands.Choice(name="削除(remove)", value="remove"),
+        app_commands.Choice(name="一覧(list)", value="list")
     ],
     mode=[
-        app_commands.Choice(name="部分一致", value="p"),
-        app_commands.Choice(name="完全一致", value="e"),
-        app_commands.Choice(name="正規表現", value="r")
+        app_commands.Choice(name="部分一致(Partial match)", value="p"),
+        app_commands.Choice(name="完全一致(Exact match)", value="e"),
+        app_commands.Choice(name="正規表現(Regular expression)", value="r")
     ]
 )
 async def notify(interaction: discord.Interaction, action: str, word: str = None, mode: str = "p", target_id: str = None):
