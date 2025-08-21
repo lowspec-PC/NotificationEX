@@ -13,6 +13,7 @@ TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 client = commands.Bot(command_prefix="!", intents=intents)
 
 DATA_FILE = "notify_words.json"
@@ -42,6 +43,31 @@ class RemoveNotificationView(View):
         self.notif_id = notif_id
 
         self.add_item(Button(label="この通知を解除する", style=discord.ButtonStyle.danger, custom_id=f"remove_{user_id}_{channel_id}_{notif_id}"))
+
+# ユーザーがサーバーを脱退またはキックされた場合
+@client.event
+async def on_member_remove(member: discord.Member):
+    user_id = str(member.id)
+    guild_id = str(member.guild.id)
+
+    data = load_data()
+    if user_id in data and guild_id in data[user_id]:
+        del data[user_id][guild_id]
+        save_data(data)
+        print(f"[INFO] {member} が {member.guild.name} を脱退したため通知を削除しました。")
+
+# ユーザーがBANされた場合
+@client.event
+async def on_member_ban(guild: discord.Guild, user: discord.User):
+    user_id = str(user.id)
+    guild_id = str(guild.id)
+
+    data = load_data()
+    if user_id in data and guild_id in data[user_id]:
+        del data[user_id][guild_id]
+        save_data(data)
+        print(f"[INFO] {user} が {guild.name} からBANされたため通知を削除しました。")
+
 
 @client.event
 async def on_interaction(interaction: discord.Interaction):
@@ -90,8 +116,8 @@ async def on_ready():
 @client.tree.command(name="notify", description="通知ワードの操作を行います")
 @app_commands.describe(
     action="add:登録, remove:削除, list:一覧",
-    word="登録または削除するワード",
-    mode="判定方法 (p:部分一致, e:完全一致, r:正規表現)",
+    word="登録するワード(または正規表現)",
+    mode="登録時のみ、判定方法[デフォルト: 部分一致] (p:部分一致, e:完全一致, r:正規表現)",
     target_id="削除するID (allで全削除)"
 )
 @app_commands.choices(
