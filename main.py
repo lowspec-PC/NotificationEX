@@ -142,6 +142,8 @@ async def notify(interaction: discord.Interaction, action: str, word: str = None
         if any(entry["word"] == word and entry["mode"] == mode for entry in data[channel_id][user_id]):
             await interaction.response.send_message("❌ そのワードは既に登録されています。", ephemeral=True)
             return
+        if word == "" or word == None:
+            await interaction.response.send_message("❌ 登録ワードが空です。", ephemeral=True)
         new_id = uuid.uuid4().hex[:8]
         data[channel_id][user_id].append({"id": new_id, "word": word, "mode": mode})
         save_data(data)
