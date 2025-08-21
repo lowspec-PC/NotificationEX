@@ -172,7 +172,7 @@ async def on_message(message: discord.Message):
                 embed_list = message.embeds if message.embeds else None
                 embed_dm = discord.Embed(
                     title="🔔 通知",
-                    description=f"チャンネル <#{channel_id}> で `{word}` が検知されました！\n\n"
+                    description=f"チャンネル <#{channel_id}> で `{word}` が検出されました！\n\n"
                                 f"👤 送信者: {message.author.mention}\n"
                                 f"💬 メッセージ: {message.content if message.content else '(本文なし)'}\n"
                                 f"⚙️ 判定モード: {MODE_LABELS[mode]}"
