@@ -6,6 +6,7 @@ import os
 import re
 import uuid
 from dotenv import load_dotenv
+from discord.ui import View, Button
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -32,6 +33,36 @@ def load_data():
 def save_data(data):
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+class RemoveNotificationView(View):
+    def __init__(self, user_id, channel_id, notif_id):
+        super().__init__(timeout=None)
+        self.user_id = user_id
+        self.channel_id = channel_id
+        self.notif_id = notif_id
+
+        self.add_item(Button(label="この通知を解除する", style=discord.ButtonStyle.danger, custom_id=f"remove_{user_id}_{channel_id}_{notif_id}"))
+
+@client.event
+async def on_interaction(interaction: discord.Interaction):
+    if interaction.data and interaction.data["custom_id"].startswith("remove_"):
+        _, user_id, channel_id, notif_id = interaction.data["custom_id"].split("_")
+        user_id = int(user_id)
+        channel_id = int(channel_id)
+
+        # JSONから削除
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        if str(channel_id) in data and str(user_id) in data[str(channel_id)]:
+            words = data[str(channel_id)][str(user_id)]
+            new_words = [w for w in words if w["id"] != notif_id]
+            data[str(channel_id)][str(user_id)] = new_words
+
+            with open(DATA_FILE, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+
+            await interaction.response.send_message("✅ 通知を解除しました。", ephemeral=True)
 
 # メッセージとembedをまとめて検索用テキストに変換
 def extract_message_content(message: discord.Message):
@@ -128,6 +159,7 @@ async def on_message(message: discord.Message):
         for entry in entries:
             word = entry["word"]
             mode = entry["mode"]
+            id = entry["id"]
             matched = False
             if mode == "p" and word in full_text:
                 matched = True
@@ -148,7 +180,8 @@ async def on_message(message: discord.Message):
                     color=discord.Color.orange()
                 )
                 try:
-                    await user.send(embed=embed_dm)
+                    view = RemoveNotificationView(user.id, message.channel.id, id)
+                    await user.send(embed=embed_dm,view=view)
                     if embed_list:
                         for emb in embed_list:
                             await user.send(embed=emb)
